@@ -1,0 +1,279 @@
+definitions:
+  domain.User:
+    properties:
+      created_at:
+        type: integer
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      password:
+        type: string
+      updated_at:
+        type: integer
+    type: object
+  handlers.HTTPError:
+    properties:
+      code:
+        example: 400
+        type: integer
+      message:
+        example: status bad request
+        type: string
+    type: object
+  handlers.HTTPSuccess:
+    properties:
+      code:
+        example: 200
+        type: integer
+      message:
+        example: OK
+        type: string
+    type: object
+  handlers.ServerError:
+    properties:
+      code:
+        example: 500
+        type: integer
+      message:
+        example: status server error
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/user/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user
+      parameters:
+      - description: userID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/handlers.HTTPSuccess'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "405":
+          description: Method not allowed
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "422":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/handlers.ServerError'
+      summary: Delete user
+      tags:
+      - user
+    get:
+      consumes:
+      - application/json
+      description: Show user
+      parameters:
+      - description: userID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User domain model
+          schema:
+            $ref: '#/definitions/domain.User'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "405":
+          description: Method not allowed
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "422":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/handlers.ServerError'
+      summary: Show user
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      description: Update user
+      parameters:
+      - description: userID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/handlers.HTTPSuccess'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "405":
+          description: Method not allowed
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "422":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/handlers.ServerError'
+      summary: Update user
+      tags:
+      - user
+  /api/v1/user/list:
+    get:
+      consumes:
+      - application/json
+      description: List users
+      parameters:
+      - description: Limit
+        in: body
+        name: limit
+        schema:
+          type: integer
+      - description: Offset
+        in: body
+        name: offset
+        schema:
+          type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User domain models
+          schema:
+            items:
+              $ref: '#/definitions/domain.User'
+            type: array
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "405":
+          description: Method not allowed
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "422":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/handlers.ServerError'
+      summary: List users
+      tags:
+      - user
+  /health_checks:
+    get:
+      consumes:
+      - application/json
+      description: healthChecks
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/handlers.HTTPSuccess'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "405":
+          description: Method not allowed
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/handlers.ServerError'
+      summary: healthChecks
+      tags:
+      - healthChecks
+swagger: "2.0"

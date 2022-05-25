@@ -1,0 +1,68 @@
+version: '3.9'
+
+# Volumes
+volumes:
+  envs_db_data:
+
+services:
+
+  # memcached
+  envs_memcached:
+    image: bitnami/memcached:latest
+    container_name: envs_memcached
+    ports:
+      - ${CACHE_PORT}:11211
+    environment:
+      MEMCACHED_CACHE_SIZE: 128
+
+  # Postgres
+  envs_database:
+    image: postgres:alpine
+    container_name: envs_database
+    restart: unless-stopped
+    volumes:
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - envs_db_data:/var/lib/postgresql/data
+    ports:
+      - ${DB_PORT}:5432
+    expose:
+      - 5432
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USERNAME}
+      SCHEMA: public
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # migrations
+  envs_migrations_runner:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: envs_api_bin
+    container_name: envs_migrations_runner
+    depends_on:
+      - envs_database
+    entrypoint: >
+      ./cli -migrate:up;
+      exit 0;
+
+  # api
+  envs_api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: envs_api_bin
+    container_name: envs_api
+    ports:
+      - ${PUBLIC_PORT}:${LISTEN_PORT}
+    expose:
+      - ${PUBLIC_PORT}
+    depends_on:
+      - envs_database
+      - envs_memcached
+      - envs_migrations_runner
