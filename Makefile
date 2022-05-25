@@ -7,6 +7,8 @@ docker_compose_bin := $(shell command -v docker-compose 2> /dev/null)
 
 .DEFAULT_GOAL := help
 
+include .env
+
 # This will output the help for each task. thanks to https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -40,7 +42,10 @@ swagger_gen:
 	swag init --dir cmd,internal --generalInfo api/main.go
 
 air:
-	./bin/air
+	$(go env GOPATH)/bin/air
+
+local:
+	PGX_DATABASE=postgres://$(DB_USERNAME):$(DB_PASSWORD)@0.0.0.0:5432/$(DB_DATABASE) ~/go/bin/air
 
 tests:
 	go test ./internal/core/services -v -race
