@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+
+  # api
+  envs_api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: dev
+    command: air
+    volumes:
+      - .:/go/src/app

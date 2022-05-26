@@ -21,19 +21,23 @@ help: ## Show this help
 	    make PULL_TAG='v1.2.3' PUBLISH_TAGS='latest v1.2.3 test-tag' app-push"
 
 build:
-	$(docker_compose_bin) build --no-cache --parallel --force-rm
+	$(docker_compose_bin) -f docker-compose.yml -f docker-compose.override.yml build --no-cache --parallel --force-rm
 	$(docker_compose_bin) up --remove-orphans --force-recreate
 
 up:
-	$(docker_compose_bin) up --no-recreate -d
+	$(docker_compose_bin) -f docker-compose.yml -f docker-compose.override.yml up --no-recreate -d
 
 debug:
 	$(docker_compose_bin) up --no-recreate
 
-rebuild:
+prod:
 	$(docker_bin) volume prune --force
-	$(docker_bin) image prune -a --force
-	$(docker_compose_bin) up --build --remove-orphans --force-recreate
+	DOCKER_BUILDKIT=0 $(docker_compose_bin) -f docker-compose.yml up --build --remove-orphans --force-recreate
+
+
+dev:
+	$(docker_bin) volume prune --force
+	DOCKER_BUILDKIT=0 $(docker_compose_bin) -f docker-compose.yml -f docker-compose.override.yml up --build --remove-orphans --force-recreate
 
 down:
 	$(docker_compose_bin) down
@@ -46,6 +50,9 @@ air:
 
 local:
 	PGX_DATABASE=postgres://$(DB_USERNAME):$(DB_PASSWORD)@0.0.0.0:5432/$(DB_DATABASE) ~/go/bin/air
+
+#tests:
+#	$(docker_compose_bin) exec -it envs_api go test ./internal/core/services -v -race && go test ./test -v -race
 
 tests:
 	go test ./internal/core/services -v -race

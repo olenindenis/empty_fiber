@@ -56,8 +56,10 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+      target: prod
     image: envs_api_bin
     container_name: envs_api
+    command: api
     ports:
       - ${PUBLIC_PORT}:${LISTEN_PORT}
     expose:
