@@ -18,6 +18,7 @@ var _ FieldParser = &tagBaseFieldParser{p: nil, field: nil, tag: ""}
 
 const (
 	requiredLabel    = "required"
+	optionalLabel    = "optional"
 	swaggerTypeTag   = "swaggertype"
 	swaggerIgnoreTag = "swaggerignore"
 )
@@ -388,10 +389,6 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 
 	varNamesTag := ps.tag.Get("x-enum-varnames")
 	if varNamesTag != "" {
-		if schema.Extensions == nil {
-			schema.Extensions = map[string]interface{}{}
-		}
-
 		varNames := strings.Split(varNamesTag, ",")
 		if len(varNames) != len(field.enums) {
 			return fmt.Errorf("invalid count of x-enum-varnames. expected %d, got %d", len(field.enums), len(varNames))
@@ -403,7 +400,19 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 			field.enumVarNames = append(field.enumVarNames, v)
 		}
 
-		schema.Extensions["x-enum-varnames"] = field.enumVarNames
+		if field.schemaType == ARRAY {
+			// Add the var names in the items schema
+			if schema.Items.Schema.Extensions == nil {
+				schema.Items.Schema.Extensions = map[string]interface{}{}
+			}
+			schema.Items.Schema.Extensions["x-enum-varnames"] = field.enumVarNames
+		} else {
+			// Add to top level schema
+			if schema.Extensions == nil {
+				schema.Extensions = map[string]interface{}{}
+			}
+			schema.Extensions["x-enum-varnames"] = field.enumVarNames
+		}
 	}
 
 	eleSchema := schema
@@ -464,8 +473,11 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 	bindingTag := ps.tag.Get(bindingTag)
 	if bindingTag != "" {
 		for _, val := range strings.Split(bindingTag, ",") {
-			if val == requiredLabel {
+			switch val {
+			case requiredLabel:
 				return true, nil
+			case optionalLabel:
+				return false, nil
 			}
 		}
 	}
@@ -473,13 +485,16 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 	validateTag := ps.tag.Get(validateTag)
 	if validateTag != "" {
 		for _, val := range strings.Split(validateTag, ",") {
-			if val == requiredLabel {
+			switch val {
+			case requiredLabel:
 				return true, nil
+			case optionalLabel:
+				return false, nil
 			}
 		}
 	}
 
-	return false, nil
+	return ps.p.RequiredByDefault, nil
 }
 
 func parseValidTags(validTag string, sf *structField) {

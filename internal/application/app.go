@@ -24,21 +24,10 @@ type App struct {
 	dependencies Dependencies
 }
 
-func init() {
-	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
-
+func NewApp(logLevel string) App {
+	initLogs(logLevel)
 	initEnv()
-}
 
-// NewApp @title Envs api
-// @version 1.1
-// @description This is an API for Envs service
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-// @BasePath /api
-func NewApp() App {
 	dependencies := NewDependencies()
 
 	return App{
@@ -48,6 +37,28 @@ func NewApp() App {
 		),
 		dependencies: dependencies,
 	}
+}
+
+func initLogs(levelString string) {
+	var level log.Level
+
+	if len(levelString) == 0 {
+		levelString = os.Getenv("LOG_LEVEL")
+	}
+
+	if len(levelString) == 0 {
+		levelString = "error"
+	}
+
+	level, err := log.ParseLevel(levelString)
+	if err != nil {
+		log.Warn(err)
+	}
+	log.Infof("Run with log level: %s", level)
+
+	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(level)
 }
 
 func initEnv() {

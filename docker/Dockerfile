@@ -1,3 +1,11 @@
+FROM golangci/golangci-lint:latest as linter
+
+WORKDIR /go/src/app
+
+COPY . .
+
+RUN golangci-lint run -v --skip-dirs cmd,docs,pkg,utils
+
 FROM golang:1.17-buster as builder
 
 WORKDIR /go/src/app
@@ -5,14 +13,14 @@ WORKDIR /go/src/app
 COPY . .
 
 RUN go build -v -o api cmd/api/main.go
-RUN go build -v -o cli cmd/migrations/main.go
+RUN go build -v -o migrations cmd/migrations/main.go
 
 FROM builder as prod
 
 WORKDIR /bin
 
 COPY --from=builder /go/src/app/api .
-COPY --from=builder /go/src/app/cli .
+COPY --from=builder /go/src/app/migrations .
 COPY --from=builder /go/src/app/.env .
 COPY --from=builder /go/src/app/database/. database/.
 

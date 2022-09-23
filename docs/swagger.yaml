@@ -1,3 +1,4 @@
+basePath: /api
 definitions:
   domain.User:
     properties:
@@ -41,8 +42,18 @@ definitions:
         example: status server error
         type: string
     type: object
+host: localhost:8080
 info:
-  contact: {}
+  contact:
+    email: fiber@swagger.io
+    name: API Support
+  description: This is an API for Envs service
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Envs api
+  version: "1.1"
 paths:
   /api/v1/user/{id}:
     delete:
