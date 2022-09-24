@@ -71,6 +71,9 @@ func newDBConnection() database.Connection {
 			Database: os.Getenv("DB_DATABASE"),
 		},
 	)
+	if err != nil {
+		panic(fmt.Sprintf("connection error: %v \n", err))
+	}
 	conn, err := dbConnection.Connection()
 	if err != nil {
 		panic(fmt.Sprintf("connection error: %v \n", err))

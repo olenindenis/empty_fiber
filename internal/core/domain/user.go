@@ -20,12 +20,12 @@ type User struct {
 type TimeStampUnix int64
 
 func (t *TimeStampUnix) Scan(src interface{}) error {
-	switch src.(type) {
+	switch src := src.(type) {
 	case time.Time:
-		*t = TimeStampUnix(src.(time.Time).Unix())
+		*t = TimeStampUnix(src.Unix())
 		return nil
 	case []byte:
-		str := string(src.([]byte))
+		str := string(src)
 		var y, m, d, hr, min, s, tzh, tzm int
 		var sign rune
 		_, e := fmt.Sscanf(str, "%d-%d-%d %d:%d:%d",
@@ -44,10 +44,10 @@ func (t *TimeStampUnix) Scan(src interface{}) error {
 		*t = TimeStampUnix(t1.Unix())
 		return nil
 	case int64:
-		*t = TimeStampUnix(src.(int64))
+		*t = TimeStampUnix(src)
 		return nil
 	case int32:
-		*t = TimeStampUnix(src.(int32))
+		*t = TimeStampUnix(src)
 		return nil
 	default:
 		fmt.Printf("Value '%s' of incompatible type '%T' found\n", src, src)

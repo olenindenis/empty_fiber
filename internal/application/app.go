@@ -90,7 +90,7 @@ func (a *App) RunServer() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
-	_ = <-c
+	<-c
 	_ = httpServer.Shutdown()
 }
 
