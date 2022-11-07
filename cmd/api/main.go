@@ -6,9 +6,9 @@ import (
 	"flag"
 )
 
-// @title Envs api
-// @version 1.1
-// @description This is an API for Envs service
+// @title Template Fiber API
+// @version 0.1
+// @description This is an API for Template Fiber service
 // @termsOfService http://swagger.io/terms/
 // @contact.name API Support
 // @contact.email fiber@swagger.io
@@ -31,7 +31,5 @@ func main() {
 	}
 
 	app := application.NewApp(level)
-	app.RunServer()
-	// Your cleanup tasks go here
-	app.CleanupTasks()
+	app.Run()
 }

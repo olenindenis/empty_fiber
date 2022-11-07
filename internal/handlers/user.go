@@ -2,10 +2,16 @@ package handlers
 
 import (
 	"envs/internal/core/ports"
+	"envs/internal/dto"
 	userRequest "envs/internal/requests/user"
 	_ "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
 	"net/http"
+	"strconv"
+)
+
+const (
+	defaultLimit = 50
 )
 
 type UserHandlers struct {
@@ -40,21 +46,16 @@ func NewUserHandlers(userService ports.UserService, validator ports.Validator) *
 // @Failure 500 {object} ServerError "Server error"
 // @Router /api/v1/user/list [get]
 func (sh *UserHandlers) List(ctx *fiber.Ctx) error {
-	request := userRequest.NewListRequest(ctx, sh.validator)
-	err := request.Validate()
+	limit, _ := strconv.Atoi(ctx.Query("limit"))
+	offset, _ := strconv.Atoi(ctx.Query("offset"))
+	order := ctx.Query("order")
+	sortBy := ctx.Query("sortBy")
+	listFilter := dto.NewListFilter(uint(limit), uint(offset), dto.Order(order), sortBy)
 
-	if err != nil {
-		return ctx.Status(http.StatusUnprocessableEntity).JSON(HTTPError{
-			Message: err.Error(),
-			Code:    http.StatusUnprocessableEntity,
-		})
-	}
-
-	users, err := sh.userService.List(request.Limit, request.Offset)
+	users, err := sh.userService.List(listFilter)
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(HTTPError{
 			Message: err.Error(),
-			Code:    http.StatusInternalServerError,
 		})
 	}
 
@@ -78,21 +79,17 @@ func (sh *UserHandlers) List(ctx *fiber.Ctx) error {
 // @Failure 500 {object} ServerError "Server error"
 // @Router /api/v1/user/{id} [get]
 func (sh *UserHandlers) Show(ctx *fiber.Ctx) error {
-	request := userRequest.NewShowRequest(ctx, sh.validator)
-	err := request.Validate()
-
+	userID, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(http.StatusUnprocessableEntity).JSON(HTTPError{
 			Message: err.Error(),
-			Code:    http.StatusUnprocessableEntity,
 		})
 	}
 
-	user, err := sh.userService.Show(request.ID)
+	user, err := sh.userService.Show(uint(userID))
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(HTTPError{
 			Message: err.Error(),
-			Code:    http.StatusInternalServerError,
 		})
 	}
 
@@ -127,7 +124,6 @@ func (sh *UserHandlers) Update(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusUnprocessableEntity).JSON(HTTPError{
 			Message: err.Error(),
-			Code:    http.StatusUnprocessableEntity,
 		})
 	}
 
@@ -135,7 +131,6 @@ func (sh *UserHandlers) Update(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(HTTPError{
 			Message: err.Error(),
-			Code:    http.StatusInternalServerError,
 		})
 	}
 
@@ -145,12 +140,10 @@ func (sh *UserHandlers) Update(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(HTTPError{
 			Message: err.Error(),
-			Code:    http.StatusInternalServerError,
 		})
 	}
 
 	return ctx.Status(http.StatusOK).JSON(HTTPSuccess{
-		Code:    http.StatusOK,
 		Message: http.StatusText(http.StatusOK),
 	})
 }
@@ -172,26 +165,21 @@ func (sh *UserHandlers) Update(ctx *fiber.Ctx) error {
 // @Failure 500 {object} ServerError "Server error"
 // @Router /api/v1/user/{id} [delete]
 func (sh *UserHandlers) Delete(ctx *fiber.Ctx) error {
-	request := userRequest.NewDeleteRequest(ctx, sh.validator)
-	err := request.Validate()
-
+	userID, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(http.StatusUnprocessableEntity).JSON(HTTPError{
 			Message: err.Error(),
-			Code:    http.StatusUnprocessableEntity,
 		})
 	}
 
-	err = sh.userService.Delete(request.ID)
+	err = sh.userService.Delete(uint(userID))
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(HTTPError{
 			Message: err.Error(),
-			Code:    http.StatusInternalServerError,
 		})
 	}
 
 	return ctx.Status(http.StatusOK).JSON(HTTPSuccess{
-		Code:    http.StatusOK,
 		Message: http.StatusText(http.StatusOK),
 	})
 }

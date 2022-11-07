@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"envs/internal/core/domain"
 	"envs/internal/core/ports"
+	"envs/internal/dto"
 	"errors"
 )
 
@@ -17,8 +18,8 @@ func NewUserService(userRepository ports.UserRepository) *UserService {
 	return &UserService{userRepository: userRepository}
 }
 
-func (us *UserService) List(limit, offset uint) ([]domain.User, error) {
-	users, err := us.userRepository.List(limit, offset)
+func (us *UserService) List(filter dto.ListFilter) ([]domain.User, error) {
+	users, err := us.userRepository.List(filter)
 	if err != nil && !errors.Is(sql.ErrNoRows, err) {
 		return []domain.User{}, err
 	}

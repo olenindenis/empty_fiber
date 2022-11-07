@@ -3,6 +3,7 @@ package repositories
 import (
 	"envs/internal/core/domain"
 	"envs/internal/core/ports"
+	"envs/internal/dto"
 	"envs/pkg/database"
 	"github.com/Masterminds/squirrel"
 	"time"
@@ -146,13 +147,14 @@ func (sr *UserRepository) Store(name, email, password string) (domain.User, erro
 	}, nil
 }
 
-func (sr *UserRepository) List(limit, offset uint) ([]domain.User, error) {
+func (sr *UserRepository) List(filter dto.ListFilter) ([]domain.User, error) {
 	var items []domain.User
 
 	query := squirrel.Select("id, name, email, created_at").
 		From(usersTableName).
-		Limit(uint64(limit)).
-		Offset(uint64(offset)).
+		Limit(uint64(filter.Limit)).
+		Offset(uint64(filter.Offset)).
+		OrderBy(filter.Order).
 		PlaceholderFormat(squirrel.Dollar)
 
 	queryString, args, err := query.ToSql()

@@ -1,114 +1,152 @@
 package application
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"github.com/joho/godotenv"
-	log "github.com/sirupsen/logrus"
+	"context"
+	"envs/internal/core/ports"
+	"envs/internal/core/services"
+	"envs/internal/handlers"
+	"envs/internal/repositories"
+	"envs/pkg/validator"
+	"github.com/gofiber/fiber/v2"
+	"go.uber.org/fx"
 	"os"
-	"os/signal"
-	"syscall"
-)
+	"strings"
+	"time"
 
-var (
-	envFileUnavailable = errors.New("env: .env file unavailable")
-)
-
-const (
-	envFileName = ".env"
+	"github.com/olekukonko/tablewriter"
 )
 
 type App struct {
-	httpServer   *HttpServer
-	dependencies Dependencies
+	httpDSN  HttpDSN
+	logLevel string
 }
 
 func NewApp(logLevel string) App {
-	initLogs(logLevel)
-	initEnv()
-
-	dependencies := NewDependencies()
+	Envs()
 
 	return App{
-		httpServer: NewHttpServer(
+		logLevel: logLevel,
+		httpDSN: NewHttpDSN(
 			WithHost(os.Getenv("LISTEN_HOST")),
 			WithPort(os.Getenv("LISTEN_PORT")),
 		),
-		dependencies: dependencies,
 	}
 }
 
-func initLogs(levelString string) {
-	var level log.Level
-
-	if len(levelString) == 0 {
-		levelString = os.Getenv("LOG_LEVEL")
-	}
-
-	if len(levelString) == 0 {
-		levelString = "error"
-	}
-
-	level, err := log.ParseLevel(levelString)
-	if err != nil {
-		log.Warn(err)
-	}
-	log.Infof("Run with log level: %s", level)
-
-	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(level)
+func (a *App) Run() {
+	fx.New(
+		fx.NopLogger,
+		fx.Supply(a.logLevel, a.httpDSN),
+		fx.Provide(
+			NewLogger,
+			NewDBConnection,
+			NewServer,
+			NewCacheConnection,
+		),
+		fx.Provide(
+			fx.Annotate(repositories.NewUserRepository, fx.As(new(ports.UserRepository))),
+			fx.Annotate(services.NewUserService, fx.As(new(ports.UserService))),
+			fx.Annotate(handlers.NewUserHandlers, fx.As(new(ports.UserHandlers))),
+			fx.Annotate(validator.NewValidator, fx.As(new(ports.Validator))),
+			fx.Annotate(handlers.NewHealthChecksHandlers, fx.As(new(ports.HealthChecksHandlers))),
+		),
+		fx.Invoke(
+			ConfigureMiddleware,
+			DocsRotes,
+			HealthChecksRoutes,
+			UserRoutes,
+		),
+		fx.Invoke(dependencies),
+	).Run()
 }
 
-func initEnv() {
-	if _, err := os.Stat(envFileName); err == nil {
-		var fileEnv map[string]string
-		fileEnv, err := godotenv.Read()
-		if err != nil {
-			log.Warn(envFileUnavailable)
+func dependencies(server *fiber.App, dsn HttpDSN, lifecycle fx.Lifecycle) {
+	PrintRoutes(server)
+
+	lifecycle.Append(
+		fx.Hook{
+			OnStart: func(context.Context) error {
+				errChan := make(chan error)
+
+				go func() {
+					errChan <- server.Listen(dsn.DSN())
+				}()
+
+				select {
+				case err := <-errChan:
+					return err
+				case <-time.After(100 * time.Millisecond):
+					return nil
+				}
+			},
+			OnStop: func(ctx context.Context) error {
+				return server.Shutdown()
+			},
+		},
+	)
+}
+
+func PrintRoutes(server *fiber.App) {
+	var arr [][]string
+	for _, routes := range server.Stack() {
+		for _, route := range routes {
+			arr = append(arr, []string{route.Method, route.Path, route.Name, strings.Join(route.Params, ",")})
 		}
+	}
 
-		for key, val := range fileEnv {
-			if len(os.Getenv(key)) == 0 {
-				os.Setenv(key, val)
-			}
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Method", "Path", "Route name", "Params"})
+	table.SetBorder(false)
+
+	table.SetHeaderColor(
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+	)
+
+	table.SetColumnColor(
+		tablewriter.Colors{},
+		tablewriter.Colors{},
+		tablewriter.Colors{},
+		tablewriter.Colors{})
+
+	//table.AppendBulk(arr)
+
+	for _, row := range arr {
+		if row[0] == "GET" {
+			table.Rich(row, []tablewriter.Colors{
+				tablewriter.Colors{tablewriter.Normal, tablewriter.FgCyanColor},
+				tablewriter.Colors{},
+				tablewriter.Colors{},
+				tablewriter.Colors{}})
+		} else if row[0] == "POST" {
+			table.Rich(row, []tablewriter.Colors{
+				tablewriter.Colors{tablewriter.Normal, tablewriter.FgGreenColor},
+				tablewriter.Colors{},
+				tablewriter.Colors{},
+				tablewriter.Colors{}})
+		} else if row[0] == "PUT" {
+			table.Rich(row, []tablewriter.Colors{
+				tablewriter.Colors{tablewriter.Normal, tablewriter.FgYellowColor},
+				tablewriter.Colors{},
+				tablewriter.Colors{},
+				tablewriter.Colors{}})
+		} else if row[0] == "DELETE" {
+			table.Rich(row, []tablewriter.Colors{
+				tablewriter.Colors{tablewriter.Normal, tablewriter.FgRedColor},
+				tablewriter.Colors{},
+				tablewriter.Colors{},
+				tablewriter.Colors{}})
+		} else if row[0] == "TRACE" {
+			table.Rich(row, []tablewriter.Colors{
+				tablewriter.Colors{tablewriter.Normal, tablewriter.BgHiRedColor},
+				tablewriter.Colors{},
+				tablewriter.Colors{},
+				tablewriter.Colors{}})
+		} else {
+			table.Append(row)
 		}
 	}
-}
-
-func (a *App) RunServer() {
-	httpServer := a.httpServer.GetServer()
-	Router(httpServer, a.dependencies)
-
-	go func() {
-		if err := httpServer.Listen(a.httpServer.GetDSN()); err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-
-	<-c
-	_ = httpServer.Shutdown()
-}
-
-func (a *App) CleanupTasks() {
-	conn, err := a.dependencies.dbConnection.Connection()
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = conn.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Print("Close application")
-}
-
-func (a *App) RouteList() {
-	app := a.httpServer.GetServer()
-	Router(app, a.dependencies)
-	data, _ := json.MarshalIndent(app.Stack(), "", "  ")
-	fmt.Println(string(data))
+	table.Render()
 }

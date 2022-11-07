@@ -1,21 +1,19 @@
 package application
 
 import (
-	"encoding/json"
+	"bytes"
 	_ "envs/docs"
-	"fmt"
+	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
+	log "github.com/sirupsen/logrus"
+	"net/http"
 )
 
-const (
-	DateTimeLayout = "15:04:05 02-01-2006"
-)
-
-type HttpServer struct {
+type HttpDSN struct {
 	client *Client
 }
 
-func NewHttpServer(options ...Option) *HttpServer {
+func NewHttpDSN(options ...Option) HttpDSN {
 	client := &Client{
 		host: defaultHttpServerHost,
 		port: defaultHttpServerPort,
@@ -24,23 +22,45 @@ func NewHttpServer(options ...Option) *HttpServer {
 		option(client)
 	}
 
-	return &HttpServer{
+	return HttpDSN{
 		client: client,
 	}
 }
 
-func (s *HttpServer) GetServer() *fiber.App {
-	return fiber.New(fiber.Config{
+func (s *HttpDSN) DSN() string {
+	buffer := bytes.NewBufferString("")
+	buffer.WriteString(s.client.host)
+	buffer.WriteString(":")
+	buffer.WriteString(s.client.port)
+	return buffer.String()
+}
+
+func NewServer() *fiber.App {
+	server := fiber.New(fiber.Config{
 		DisableStartupMessage: false,
 		Prefork:               false,
 		CaseSensitive:         false,
 		StrictRouting:         true,
-		IdleTimeout:           idleTimeout,
 		ServerHeader:          "CustomServer",
 		JSONEncoder:           json.Marshal,
-	})
-}
+		JSONDecoder:           json.Unmarshal,
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			log.Info(err.Error())
+			code := fiber.StatusInternalServerError
 
-func (s *HttpServer) GetDSN() string {
-	return fmt.Sprintf("%s:%s", s.client.host, s.client.port)
+			if e, ok := err.(*fiber.Error); ok {
+				code = e.Code
+			}
+
+			ctx.Set(fiber.HeaderContentType, fiber.MIMETextPlainCharsetUTF8)
+
+			if code == http.StatusInternalServerError {
+				return ctx.Status(code).SendString(http.StatusText(http.StatusInternalServerError))
+			}
+
+			return ctx.Status(code).SendString(err.Error())
+		},
+	})
+
+	return server
 }

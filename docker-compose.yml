@@ -48,7 +48,7 @@ services:
     depends_on:
       - envs_database
     entrypoint: >
-      ./cli -migrate:up;
+      ./migrations -migrate:up;
       exit 0;
 
   # api

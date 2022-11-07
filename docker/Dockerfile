@@ -1,10 +1,10 @@
-FROM golangci/golangci-lint:latest as linter
-
-WORKDIR /go/src/app
-
-COPY . .
-
-RUN golangci-lint run -v --skip-dirs cmd,docs,pkg,utils
+#FROM golangci/golangci-lint:latest as linter
+#ENV GO111MODULE=off
+#WORKDIR /go/src/app
+#
+#COPY . .
+#
+#RUN golangci-lint run -v --skip-dirs cmd,docs,pkg,utils
 
 FROM golang:1.17-buster as builder
 
