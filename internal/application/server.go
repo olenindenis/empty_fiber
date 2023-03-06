@@ -2,11 +2,12 @@ package application
 
 import (
 	"bytes"
+	"net/http"
+
 	_ "envs/docs"
+
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
-	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 type HttpDSN struct {
@@ -36,6 +37,8 @@ func (s *HttpDSN) DSN() string {
 }
 
 func NewServer() *fiber.App {
+	log := NewLogger(LevelForLog).Sugar()
+
 	server := fiber.New(fiber.Config{
 		DisableStartupMessage: false,
 		Prefork:               false,

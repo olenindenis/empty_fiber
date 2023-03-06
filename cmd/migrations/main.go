@@ -1,13 +1,15 @@
 package main
 
 import (
-	"envs/pkg/database"
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/joho/godotenv"
-	log "github.com/sirupsen/logrus"
 	"os"
+
+	"envs/pkg/database"
+	"envs/pkg/logger"
+
+	"github.com/joho/godotenv"
 )
 
 type Color string
@@ -29,13 +31,9 @@ const (
 	envFileName = ".env"
 )
 
-func init() {
-	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
-}
-
 func initEnv() {
+	log := logger.New(logger.Dev)
+
 	if _, err := os.Stat(envFileName); err == nil {
 		var fileEnv map[string]string
 		fileEnv, err := godotenv.Read()
@@ -52,6 +50,8 @@ func initEnv() {
 }
 
 func main() {
+	log := logger.New(logger.Dev)
+
 	help := flag.Bool("help", false, "display help")
 	h := flag.Bool("h", false, "display help")
 	migrateNew := flag.Bool("migrate:new", false, "create new migration file")

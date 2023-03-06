@@ -1,32 +1,33 @@
 package repositories
 
 import (
+	"time"
+
 	"envs/internal/core/domain"
 	"envs/internal/core/ports"
 	"envs/internal/dto"
 	"envs/pkg/database"
+
 	"github.com/Masterminds/squirrel"
-	"time"
 )
 
 const (
-	usersToRolesTableName = "user_role"
-	usersTableName        = "users"
+	usersTableName = "users"
 )
 
-type UserRepository struct {
+type User struct {
 	database database.Connection
 }
 
-var _ ports.UserRepository = (*UserRepository)(nil)
+var _ ports.UserRepository = (*User)(nil)
 
-func NewUserRepository(database database.Connection) *UserRepository {
-	return &UserRepository{
+func NewUser(database database.Connection) *User {
+	return &User{
 		database: database,
 	}
 }
 
-func (sr *UserRepository) Find(id uint) (domain.User, error) {
+func (sr *User) Find(id uint) (domain.User, error) {
 	query, args, err := squirrel.Select(
 		"id",
 		"name",
@@ -59,7 +60,7 @@ func (sr *UserRepository) Find(id uint) (domain.User, error) {
 	return item, nil
 }
 
-func (sr *UserRepository) FindByEmail(email string) (domain.User, error) {
+func (sr *User) FindByEmail(email string) (domain.User, error) {
 	query, args, err := squirrel.Select(
 		"id",
 		"name",
@@ -92,7 +93,7 @@ func (sr *UserRepository) FindByEmail(email string) (domain.User, error) {
 	return item, nil
 }
 
-func (sr *UserRepository) Store(name, email, password string) (domain.User, error) {
+func (sr *User) Store(name, email, password string) error {
 	query, args, err := squirrel.Insert(usersTableName).
 		Columns(
 			"name",
@@ -111,43 +112,33 @@ func (sr *UserRepository) Store(name, email, password string) (domain.User, erro
 		ToSql()
 
 	if err != nil {
-		return domain.User{}, err
+		return err
 	}
 
 	conn, err := sr.database.Connection()
 	if err != nil {
-		return domain.User{}, err
+		return err
 	}
 
 	tx, err := conn.Begin()
 	if err != nil {
-		return domain.User{}, err
+		return err
 	}
 
 	var userID int
 	err = tx.QueryRow(query, args...).Scan(&userID)
 	if err != nil {
-		return domain.User{}, err
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {
-		return domain.User{}, err
+		return err
 	}
 
-	//userID, err := result.LastInsertId()
-	//if err != nil {
-	//	return domain.User{}, err
-	//}
-
-	return domain.User{
-		ID:        uint(userID),
-		Name:      name,
-		Email:     email,
-		CreatedAt: domain.TimeStampUnix(time.Now().UTC().Second()),
-	}, nil
+	return nil
 }
 
-func (sr *UserRepository) List(filter dto.ListFilter) ([]domain.User, error) {
+func (sr *User) List(filter dto.ListFilter) ([]domain.User, error) {
 	var items []domain.User
 
 	query := squirrel.Select("id, name, email, created_at").
@@ -187,7 +178,7 @@ func (sr *UserRepository) List(filter dto.ListFilter) ([]domain.User, error) {
 	return items, nil
 }
 
-func (sr *UserRepository) Update(user domain.User) error {
+func (sr *User) Update(user domain.User) error {
 	query := squirrel.Update(usersTableName).
 		Set("name", user.Name).
 		PlaceholderFormat(squirrel.Dollar)
@@ -210,7 +201,7 @@ func (sr *UserRepository) Update(user domain.User) error {
 	return nil
 }
 
-func (sr *UserRepository) Delete(id uint) error {
+func (sr *User) Delete(id uint) error {
 	query := squirrel.Delete(usersTableName).
 		Where(squirrel.Eq{"id": id}).
 		PlaceholderFormat(squirrel.Dollar)

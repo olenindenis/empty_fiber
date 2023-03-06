@@ -1,15 +1,17 @@
 package application
 
 import (
-	"envs/pkg/cache"
-	"envs/pkg/database"
 	"errors"
 	"fmt"
-	"github.com/joho/godotenv"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
 	"time"
+
+	"envs/pkg/cache"
+	"envs/pkg/database"
+
+	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
 var (
@@ -18,9 +20,12 @@ var (
 
 const (
 	envFileName = ".env"
+	levelForLog = "dev"
 )
 
 func Envs() {
+	log := NewLogger(levelForLog).Sugar()
+
 	if _, err := os.Stat(envFileName); err == nil {
 		var fileEnv map[string]string
 		fileEnv, err := godotenv.Read()
@@ -36,31 +41,23 @@ func Envs() {
 	}
 }
 
-func NewLogger(levelString string) *log.Logger {
-	var level log.Level
+func NewLogger(level string) *zap.Logger {
+	var logger *zap.Logger
+	var err error
+	defer logger.Sync()
 
-	if len(levelString) == 0 {
-		levelString = os.Getenv("LOG_LEVEL")
+	switch level {
+	case "prod":
+		logger, err = zap.NewProduction()
+		if err != nil {
+			return nil
+		}
+	case "dev":
+		logger, err = zap.NewDevelopment()
+		if err != nil {
+			return nil
+		}
 	}
-
-	if len(levelString) == 0 {
-		levelString = "error"
-	}
-
-	level, err := log.ParseLevel(levelString)
-	if err != nil {
-		log.Warn(err)
-	}
-	log.Infof("Run with log level: %s", level)
-
-	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(level)
-
-	logger := log.New()
-	logger.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	logger.SetOutput(os.Stdout)
-	logger.SetLevel(level)
 
 	return logger
 }
@@ -81,18 +78,13 @@ func NewDBConnection() database.Connection {
 		panic(fmt.Errorf("error env DB_START_TIMEOUT: %w", err))
 	}
 	time.Sleep(time.Second * time.Duration(startTimeout))
-
-	port, err := strconv.Atoi(os.Getenv("DB_PORT"))
-	if err != nil {
-		panic(fmt.Errorf("error env DB_PORT: %w \n", err))
-	}
 	dbConnection, err := database.NewDBConnection(
 		database.DriverName(os.Getenv("DB_DRIVER")),
 		database.DBConfig{
 			Username: os.Getenv("DB_USERNAME"),
 			Password: os.Getenv("DB_PASSWORD"),
 			Host:     os.Getenv("DB_HOST"),
-			Port:     uint16(port),
+			Port:     os.Getenv("DB_PORT"),
 			Database: os.Getenv("DB_DATABASE"),
 		},
 	)

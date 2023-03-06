@@ -1,11 +1,13 @@
 package user
 
 import (
+	"strconv"
+
 	"envs/internal/core/ports"
 	"envs/internal/requests"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/valyala/fastjson"
-	"strconv"
 )
 
 // UpdateRequest example

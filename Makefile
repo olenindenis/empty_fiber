@@ -1,13 +1,13 @@
 #!/usr/bin/make
 # Makefile readme (ru): <http://linux.yaroslavl.ru/docs/prog/gnu_make_3-79_russian_manual.html>
 # Makefile readme (en): <https://www.gnu.org/software/make/manual/html_node/index.html#SEC_Contents>
+include .env
+export
 
 docker_bin := $(shell command -v docker 2> /dev/null)
 docker_compose_bin := $(shell command -v docker-compose 2> /dev/null)
 
 .DEFAULT_GOAL := help
-
-include .env
 
 # This will output the help for each task. thanks to https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help: ## Show this help
@@ -34,7 +34,6 @@ prod:
 	$(docker_bin) volume prune --force
 	DOCKER_BUILDKIT=0 $(docker_compose_bin) -f docker-compose.yml up --build --remove-orphans --force-recreate
 
-
 dev:
 	$(docker_bin) volume prune --force
 	DOCKER_BUILDKIT=0 $(docker_compose_bin) -f docker-compose.yml -f docker-compose.override.yml up --build --remove-orphans --force-recreate
@@ -45,6 +44,15 @@ down:
 swagger_gen:
 	swag init --dir cmd,internal --generalInfo api/main.go
 
+migrate-up:
+	migrate -source="file://./database/migrations/" -database="$(DB_DRIVER)://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_DATABASE)?sslmode=disable" up
+
+migrate-down:
+	migrate -source="file://./database/migrations/" -database="$(DB_DRIVER)://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_DATABASE)?sslmode=disable" down -all
+
+mockgen:
+	mockgen -source=./internal/core/ports/user.go -package mocks > ./internal/mocks/user.go
+
 air:
 	$(go env GOPATH)/bin/air
 
@@ -52,10 +60,10 @@ local:
 	PGX_DATABASE=postgres://$(DB_USERNAME):$(DB_PASSWORD)@0.0.0.0:5432/$(DB_DATABASE) ~/go/bin/air
 
 #tests:
-#	$(docker_compose_bin) exec -it envs_api go test ./internal/core/services -v -race && go test ./test -v -race
+#	$(docker_compose_bin) exec -it envs_api go tests ./internal/core/services -v -race && go tests ./tests -v -race
 
 tests:
 	go test ./internal/core/services -v -race
-	go test ./test -v -race
+	go test ./tests -v -race
 
 .PHONY: tests

@@ -3,6 +3,7 @@ package ports
 import (
 	"envs/internal/core/domain"
 	"envs/internal/dto"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -21,7 +22,7 @@ type UserService interface {
 }
 
 type UserRepository interface {
-	Store(name, email, password string) (domain.User, error)
+	Store(name, email, password string) error
 	FindByEmail(email string) (domain.User, error)
 	Find(id uint) (domain.User, error)
 	List(filter dto.ListFilter) ([]domain.User, error)

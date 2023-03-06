@@ -1,16 +1,17 @@
 package validator
 
 import (
-	goValidator "github.com/go-playground/validator/v10"
 	"reflect"
 	"strings"
+
+	goValidator "github.com/go-playground/validator/v10"
 )
 
 type Validator struct {
 	validator *goValidator.Validate
 }
 
-func NewValidator() *Validator {
+func New() *Validator {
 	validate := goValidator.New()
 	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
 		return strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]

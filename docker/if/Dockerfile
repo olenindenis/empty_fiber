@@ -1,11 +1,11 @@
-FROM golang:1.17-buster as builder
+FROM golang:1.20-buster as builder
 
 WORKDIR /go/src/app
 
 COPY . .
 
-RUN go build -v -o api cmd/api/main.go
-RUN go build -v -o cli cmd/migrations/main.go
+RUN go build -u -o api cmd/api/main.go
+RUN go build -u -o cli cmd/migrations/main.go
 
 FROM builder as dev
 

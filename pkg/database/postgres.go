@@ -4,11 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
+
+	"envs/pkg/logger"
+
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jackc/pgx/v4/stdlib"
-	log "github.com/sirupsen/logrus"
-	"os"
+
+	"go.uber.org/zap"
 )
 
 var _ Connection = (*PostgresConnection)(nil)
@@ -17,6 +21,7 @@ type PostgresConnection struct {
 	config DBConfig
 	pool   *pgxpool.Pool
 	conn   *sql.DB
+	log    *zap.SugaredLogger
 }
 
 func NewPostgresConnection(config DBConfig) Connection {
@@ -24,14 +29,12 @@ func NewPostgresConnection(config DBConfig) Connection {
 	if err != nil {
 		panic(fmt.Sprintf("connection error: %v \n", err))
 	}
+
 	connection := PostgresConnection{
 		conn: stdlib.OpenDB(*pgxConfig),
+		log:  logger.New(logger.Dev),
 	}
 	connection.config = config
-	//_, err := connection.ConnectionPool()
-	//if err != nil {
-	//	panic(fmt.Sprintf("connection pool error: %v \n", err))
-	//}
 	return connection
 }
 
@@ -45,20 +48,12 @@ func (s PostgresConnection) ConnectionPool() (*pgxpool.Pool, error) {
 		s.config.Database,
 	)
 
-	log.Info(dsn)
-
+	s.log.Info(dsn)
 	var err error
 	s.pool, err = pgxpool.Connect(context.Background(), dsn)
 	if err != nil {
 		return nil, err
 	}
-
-	//db, err := sql.Open("pgx", dsn)
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	//db.SetMaxOpenConns()
 
 	return s.pool, nil
 }

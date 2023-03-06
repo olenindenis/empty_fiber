@@ -2,23 +2,24 @@ package services
 
 import (
 	"database/sql"
+	"errors"
+
 	"envs/internal/core/domain"
 	"envs/internal/core/ports"
 	"envs/internal/dto"
-	"errors"
 )
 
-type UserService struct {
+type User struct {
 	userRepository ports.UserRepository
 }
 
-var _ ports.UserService = (*UserService)(nil)
+var _ ports.UserService = (*User)(nil)
 
-func NewUserService(userRepository ports.UserRepository) *UserService {
-	return &UserService{userRepository: userRepository}
+func NewUser(userRepository ports.UserRepository) *User {
+	return &User{userRepository: userRepository}
 }
 
-func (us *UserService) List(filter dto.ListFilter) ([]domain.User, error) {
+func (us *User) List(filter dto.ListFilter) ([]domain.User, error) {
 	users, err := us.userRepository.List(filter)
 	if err != nil && !errors.Is(sql.ErrNoRows, err) {
 		return []domain.User{}, err
@@ -27,7 +28,7 @@ func (us *UserService) List(filter dto.ListFilter) ([]domain.User, error) {
 	return users, nil
 }
 
-func (us *UserService) Show(id uint) (domain.User, error) {
+func (us *User) Show(id uint) (domain.User, error) {
 	user, err := us.userRepository.Find(id)
 	if err != nil && !errors.Is(sql.ErrNoRows, err) {
 		return domain.User{}, err
@@ -36,7 +37,7 @@ func (us *UserService) Show(id uint) (domain.User, error) {
 	return user, nil
 }
 
-func (us *UserService) Update(user domain.User) error {
+func (us *User) Update(user domain.User) error {
 	err := us.userRepository.Update(user)
 	if err != nil && !errors.Is(sql.ErrNoRows, err) {
 		return err
@@ -45,7 +46,7 @@ func (us *UserService) Update(user domain.User) error {
 	return nil
 }
 
-func (us *UserService) Delete(id uint) error {
+func (us *User) Delete(id uint) error {
 	err := us.userRepository.Delete(id)
 	if err != nil && !errors.Is(sql.ErrNoRows, err) {
 		return err

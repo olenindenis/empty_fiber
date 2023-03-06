@@ -4,25 +4,30 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
+	"envs/pkg/logger"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/golang-migrate/migrate/v4/database/mysql"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 
+	"go.uber.org/zap"
+
 	_ "github.com/golang-migrate/migrate/v4/database/mysql"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	log "github.com/sirupsen/logrus"
-	"os"
-	"strconv"
-	"strings"
-	"time"
 )
 
 const migrationFilesPath = "database/migrations"
 
 type Migrator struct {
 	migration *migrate.Migrate
+	log       *zap.SugaredLogger
 }
 
 func NewMigrator() (Migrator, error) {
@@ -31,28 +36,21 @@ func NewMigrator() (Migrator, error) {
 		panic(fmt.Sprintf("no timeout error: %v \n", err))
 	}
 	time.Sleep(time.Second * time.Duration(startTimeout))
-
-	port, err := strconv.Atoi(os.Getenv("DB_PORT"))
-	if err != nil {
-		panic(fmt.Sprintf("error port number: %v \n", err))
-	}
 	db, err := NewDBConnection(
 		DriverName(os.Getenv("DB_DRIVER")),
 		DBConfig{
 			Username: os.Getenv("DB_USERNAME"),
 			Password: os.Getenv("DB_PASSWORD"),
 			Host:     os.Getenv("DB_HOST"),
-			Port:     uint16(port),
+			Port:     os.Getenv("DB_PORT"),
 			Database: os.Getenv("DB_DATABASE"),
 		},
 	)
-
-	//if err != nil {
-	//	return Migrator{}, fmt.Errorf("instance error: %v \n", err)
-	//}
+	if err != nil {
+		return Migrator{}, fmt.Errorf("db connection error: %v \n", err)
+	}
 
 	driver, err := getDriver(db)
-	//driver, err := mysql.WithInstance(conn, &mysql.Config{})
 	if err != nil {
 		return Migrator{}, fmt.Errorf("instance error: %v \n", err)
 	}
@@ -65,7 +63,10 @@ func NewMigrator() (Migrator, error) {
 		return Migrator{}, fmt.Errorf("instance error: %v \n", err)
 	}
 
-	return Migrator{migration: migrator}, nil
+	return Migrator{
+		migration: migrator,
+		log:       logger.New(logger.Dev),
+	}, nil
 }
 
 func getDriver(db Connection) (database.Driver, error) {
@@ -90,7 +91,7 @@ func (m *Migrator) Up() error {
 		}
 	}
 
-	log.Info("Migration success")
+	m.log.Info("Migration success")
 
 	return nil
 }
@@ -102,7 +103,7 @@ func (m *Migrator) Down() error {
 		}
 	}
 
-	log.Info("Migration success")
+	m.log.Info("Migration success")
 
 	return nil
 }
@@ -139,7 +140,7 @@ func (m *Migrator) New() error {
 		return err
 	}
 
-	log.Println(fmt.Sprintf("Migrations (%s, %s) created", upFileName, downFileName))
+	m.log.Info(fmt.Sprintf("Migrations (%s, %s) created", upFileName, downFileName))
 
 	return nil
 }

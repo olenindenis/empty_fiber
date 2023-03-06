@@ -1,28 +1,30 @@
 package handlers
 
 import (
+	"net/http"
+	"strconv"
+
 	"envs/internal/core/ports"
 	"envs/internal/dto"
 	userRequest "envs/internal/requests/user"
+
 	_ "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
-	"net/http"
-	"strconv"
 )
 
 const (
 	defaultLimit = 50
 )
 
-type UserHandlers struct {
+type User struct {
 	validator   ports.Validator
 	userService ports.UserService
 }
 
-var _ ports.UserHandlers = (*UserHandlers)(nil)
+var _ ports.UserHandlers = (*User)(nil)
 
-func NewUserHandlers(userService ports.UserService, validator ports.Validator) *UserHandlers {
-	return &UserHandlers{
+func NewUser(userService ports.UserService, validator ports.Validator) *User {
+	return &User{
 		validator:   validator,
 		userService: userService,
 	}
@@ -45,7 +47,7 @@ func NewUserHandlers(userService ports.UserService, validator ports.Validator) *
 // @Failure 429 {object} HTTPError "Too Many Requests"
 // @Failure 500 {object} ServerError "Server error"
 // @Router /api/v1/user/list [get]
-func (sh *UserHandlers) List(ctx *fiber.Ctx) error {
+func (sh *User) List(ctx *fiber.Ctx) error {
 	limit, _ := strconv.Atoi(ctx.Query("limit"))
 	offset, _ := strconv.Atoi(ctx.Query("offset"))
 	order := ctx.Query("order")
@@ -78,7 +80,7 @@ func (sh *UserHandlers) List(ctx *fiber.Ctx) error {
 // @Failure 429 {object} HTTPError "Too Many Requests"
 // @Failure 500 {object} ServerError "Server error"
 // @Router /api/v1/user/{id} [get]
-func (sh *UserHandlers) Show(ctx *fiber.Ctx) error {
+func (sh *User) Show(ctx *fiber.Ctx) error {
 	userID, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(http.StatusUnprocessableEntity).JSON(HTTPError{
@@ -117,7 +119,7 @@ func (sh *UserHandlers) Show(ctx *fiber.Ctx) error {
 // @Failure 429 {object} HTTPError "Too Many Requests"
 // @Failure 500 {object} ServerError "Server error"
 // @Router /api/v1/user/{id} [put]
-func (sh *UserHandlers) Update(ctx *fiber.Ctx) error {
+func (sh *User) Update(ctx *fiber.Ctx) error {
 	request := userRequest.NewUpdateRequest(ctx, sh.validator)
 	err := request.Validate()
 
@@ -164,7 +166,7 @@ func (sh *UserHandlers) Update(ctx *fiber.Ctx) error {
 // @Failure 429 {object} HTTPError "Too Many Requests"
 // @Failure 500 {object} ServerError "Server error"
 // @Router /api/v1/user/{id} [delete]
-func (sh *UserHandlers) Delete(ctx *fiber.Ctx) error {
+func (sh *User) Delete(ctx *fiber.Ctx) error {
 	userID, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(http.StatusUnprocessableEntity).JSON(HTTPError{

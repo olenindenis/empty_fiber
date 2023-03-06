@@ -1,33 +1,77 @@
 package services
 
 import (
-	"envs/internal/core/domain"
-	"envs/internal/mocks"
-	"github.com/bxcodec/faker/v3"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"envs/internal/core/domain"
+	"envs/internal/dto"
+	"envs/internal/mocks"
+
+	"github.com/bxcodec/faker/v3"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestShow(t *testing.T) {
 	userID := uint(1)
-	service := NewUserService(mocks.NewUserRepository(userID))
+	ctrl := gomock.NewController(t)
+	repo := mocks.NewMockUserRepository(ctrl)
+	service := NewUser(repo)
 
-	user, err := service.Show(userID)
-	assert.Equal(t, nil, err, err)
-	assert.Equal(t, userID, user.ID, "userID error")
+	userModel := domain.User{
+		ID:    userID,
+		Name:  faker.Name(),
+		Email: faker.Email(),
+	}
+
+	repo.
+		EXPECT().
+		Find(userID).
+		Return(userModel, nil)
+
+	userDomain, err := service.Show(userID)
+	assert.NoError(t, err)
+	assert.Equal(t, userModel, userDomain)
 }
 
 func TestList(t *testing.T) {
-	userID := uint(1)
-	service := NewUserService(mocks.NewUserRepository(userID))
+	var (
+		userID1 uint = 1
+		userID2 uint = 2
+	)
 
-	_, err := service.List(10, 0)
-	assert.Equal(t, nil, err, err)
+	ctrl := gomock.NewController(t)
+	repo := mocks.NewMockUserRepository(ctrl)
+	service, listFilter := NewUser(repo), dto.ListFilter{}
+
+	usersModel := []domain.User{
+		{
+			ID:    userID1,
+			Name:  faker.Name(),
+			Email: faker.Email(),
+		},
+		{
+			ID:    userID2,
+			Name:  faker.Name(),
+			Email: faker.Email(),
+		},
+	}
+
+	repo.
+		EXPECT().
+		List(listFilter).
+		Return(usersModel, nil)
+
+	usersDomain, err := service.List(listFilter)
+	assert.NoError(t, err)
+	assert.Equal(t, usersModel, usersDomain)
 }
 
 func TestUpdate(t *testing.T) {
 	userID := uint(1)
-	service := NewUserService(mocks.NewUserRepository(userID))
+	ctrl := gomock.NewController(t)
+	repo := mocks.NewMockUserRepository(ctrl)
+	service := NewUser(repo)
 
 	user := domain.User{
 		ID:    userID,
@@ -35,14 +79,24 @@ func TestUpdate(t *testing.T) {
 		Email: faker.Email(),
 	}
 
-	err := service.Update(user)
-	assert.Equal(t, nil, err, err)
+	repo.
+		EXPECT().
+		Update(user).
+		Return((error)(nil))
+
+	assert.NoError(t, service.Update(user))
 }
 
 func TestDelete(t *testing.T) {
 	userID := uint(1)
-	service := NewUserService(mocks.NewUserRepository(userID))
+	ctrl := gomock.NewController(t)
+	repo := mocks.NewMockUserRepository(ctrl)
+	service := NewUser(repo)
 
-	err := service.Delete(userID)
-	assert.Equal(t, nil, err, err)
+	repo.
+		EXPECT().
+		Delete(userID).
+		Return((error)(nil))
+
+	assert.NoError(t, service.Delete(userID))
 }

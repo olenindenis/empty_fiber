@@ -1,9 +1,10 @@
 package main
 
 import (
+	"flag"
+
 	"envs/internal/application"
 	"envs/pkg/formater"
-	"flag"
 )
 
 // @title Template Fiber API
@@ -20,12 +21,12 @@ func main() {
 	help := flag.Bool("help", false, "display help")
 	h := flag.Bool("h", false, "display help")
 	var level string
-	flag.StringVar(&level, "level", "info", "Run server with some logging level '--level info'")
+	flag.StringVar(&level, "level", "dev", "Run server with level dev'--level dev'")
 	flag.Parse()
 
 	if *help || *h {
 		formater.Colorize(formater.ColorGreen, "-h - help")
-		formater.Colorize(formater.ColorGreen, "-level - Run server with some logging level '--level info'\n"+
+		formater.Colorize(formater.ColorGreen, "-level - Run server with level dev '--level dev'\n"+
 			"Levels: trace,debug,info,warning,error,fatal,panic")
 		return
 	}
