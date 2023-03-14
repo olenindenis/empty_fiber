@@ -16,7 +16,7 @@ func TestShow(t *testing.T) {
 	userID := uint(1)
 	ctrl := gomock.NewController(t)
 	repo := mocks.NewMockUserRepository(ctrl)
-	service := NewUser(repo)
+	service := NewUserService(repo)
 
 	userModel := domain.User{
 		ID:    userID,
@@ -42,7 +42,7 @@ func TestList(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	repo := mocks.NewMockUserRepository(ctrl)
-	service, listFilter := NewUser(repo), dto.ListFilter{}
+	service, listFilter := NewUserService(repo), dto.ListFilter{}
 
 	usersModel := []domain.User{
 		{
@@ -71,7 +71,7 @@ func TestUpdate(t *testing.T) {
 	userID := uint(1)
 	ctrl := gomock.NewController(t)
 	repo := mocks.NewMockUserRepository(ctrl)
-	service := NewUser(repo)
+	service := NewUserService(repo)
 
 	user := domain.User{
 		ID:    userID,
@@ -91,7 +91,7 @@ func TestDelete(t *testing.T) {
 	userID := uint(1)
 	ctrl := gomock.NewController(t)
 	repo := mocks.NewMockUserRepository(ctrl)
-	service := NewUser(repo)
+	service := NewUserService(repo)
 
 	repo.
 		EXPECT().

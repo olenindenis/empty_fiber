@@ -46,10 +46,10 @@ func (a *App) Run() {
 			NewCacheConnection,
 		),
 		fx.Provide(
-			fx.Annotate(repositories.NewUser, fx.As(new(ports.UserRepository))),
-			fx.Annotate(services.NewUser, fx.As(new(ports.UserService))),
-			fx.Annotate(handlers.NewUser, fx.As(new(ports.UserHandlers))),
-			fx.Annotate(validator.New, fx.As(new(ports.Validator))),
+			fx.Annotate(repositories.NewUserRepository, fx.As(new(ports.UserRepository))),
+			fx.Annotate(services.NewUserService, fx.As(new(ports.UserService))),
+			fx.Annotate(handlers.NewUserHandler, fx.As(new(ports.UserHandlers))),
+			fx.Annotate(validator.NewValidator, fx.As(new(ports.Validator))),
 			fx.Annotate(handlers.NewHealthChecksHandlers, fx.As(new(ports.HealthChecksHandlers))),
 		),
 		fx.Invoke(

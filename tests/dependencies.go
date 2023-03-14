@@ -8,10 +8,10 @@ import (
 	"envs/pkg/validator"
 )
 
-func InitUserDependencies(db database.Connection) *handlers.User {
-	return handlers.NewUser(
-		services.NewUser(
-			repositories.NewUser(db)),
-		validator.New(),
+func InitUserDependencies(db database.Connection) *handlers.UserHandler {
+	return handlers.NewUserHandler(
+		services.NewUserService(
+			repositories.NewUserRepository(db)),
+		validator.NewValidator(),
 	)
 }

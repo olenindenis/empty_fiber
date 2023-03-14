@@ -11,7 +11,7 @@ type Validator struct {
 	validator *goValidator.Validate
 }
 
-func New() *Validator {
+func NewValidator() *Validator {
 	validate := goValidator.New()
 	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
 		return strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]

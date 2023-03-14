@@ -15,19 +15,19 @@ const (
 	usersTableName = "users"
 )
 
-type User struct {
+type UserRepository struct {
 	database database.Connection
 }
 
-var _ ports.UserRepository = (*User)(nil)
+var _ ports.UserRepository = (*UserRepository)(nil)
 
-func NewUser(database database.Connection) *User {
-	return &User{
+func NewUserRepository(database database.Connection) *UserRepository {
+	return &UserRepository{
 		database: database,
 	}
 }
 
-func (sr *User) Find(id uint) (domain.User, error) {
+func (sr *UserRepository) Find(id uint) (domain.User, error) {
 	query, args, err := squirrel.Select(
 		"id",
 		"name",
@@ -60,7 +60,7 @@ func (sr *User) Find(id uint) (domain.User, error) {
 	return item, nil
 }
 
-func (sr *User) FindByEmail(email string) (domain.User, error) {
+func (sr *UserRepository) FindByEmail(email string) (domain.User, error) {
 	query, args, err := squirrel.Select(
 		"id",
 		"name",
@@ -93,7 +93,7 @@ func (sr *User) FindByEmail(email string) (domain.User, error) {
 	return item, nil
 }
 
-func (sr *User) Store(name, email, password string) (domain.User, error) {
+func (sr *UserRepository) Store(name, email, password string) (domain.User, error) {
 	query, args, err := squirrel.Insert(usersTableName).
 		Columns(
 			"name",
@@ -143,7 +143,7 @@ func (sr *User) Store(name, email, password string) (domain.User, error) {
 	}, nil
 }
 
-func (sr *User) List(filter dto.ListFilter) ([]domain.User, error) {
+func (sr *UserRepository) List(filter dto.ListFilter) ([]domain.User, error) {
 	var items []domain.User
 
 	query := squirrel.Select("id, name, email, created_at").
@@ -183,7 +183,7 @@ func (sr *User) List(filter dto.ListFilter) ([]domain.User, error) {
 	return items, nil
 }
 
-func (sr *User) Update(user domain.User) error {
+func (sr *UserRepository) Update(user domain.User) error {
 	query := squirrel.Update(usersTableName).
 		Set("name", user.Name).
 		PlaceholderFormat(squirrel.Dollar)
@@ -206,7 +206,7 @@ func (sr *User) Update(user domain.User) error {
 	return nil
 }
 
-func (sr *User) Delete(id uint) error {
+func (sr *UserRepository) Delete(id uint) error {
 	query := squirrel.Delete(usersTableName).
 		Where(squirrel.Eq{"id": id}).
 		PlaceholderFormat(squirrel.Dollar)
