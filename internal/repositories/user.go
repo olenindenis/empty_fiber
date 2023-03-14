@@ -93,7 +93,7 @@ func (sr *User) FindByEmail(email string) (domain.User, error) {
 	return item, nil
 }
 
-func (sr *User) Store(name, email, password string) error {
+func (sr *User) Store(name, email, password string) (domain.User, error) {
 	query, args, err := squirrel.Insert(usersTableName).
 		Columns(
 			"name",
@@ -112,30 +112,35 @@ func (sr *User) Store(name, email, password string) error {
 		ToSql()
 
 	if err != nil {
-		return err
+		return domain.User{}, err
 	}
 
 	conn, err := sr.database.Connection()
 	if err != nil {
-		return err
+		return domain.User{}, err
 	}
 
 	tx, err := conn.Begin()
 	if err != nil {
-		return err
+		return domain.User{}, err
 	}
 
 	var userID int
 	err = tx.QueryRow(query, args...).Scan(&userID)
 	if err != nil {
-		return err
+		return domain.User{}, err
 	}
 
 	if err := tx.Commit(); err != nil {
-		return err
+		return domain.User{}, err
 	}
 
-	return nil
+	return domain.User{
+		ID:        uint(userID),
+		Name:      name,
+		Email:     email,
+		CreatedAt: domain.TimeStampUnix(time.Now().UTC().Second()),
+	}, nil
 }
 
 func (sr *User) List(filter dto.ListFilter) ([]domain.User, error) {

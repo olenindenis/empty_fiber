@@ -22,7 +22,7 @@ type UserService interface {
 }
 
 type UserRepository interface {
-	Store(name, email, password string) error
+	Store(name, email, password string) (domain.User, error)
 	FindByEmail(email string) (domain.User, error)
 	Find(id uint) (domain.User, error)
 	List(filter dto.ListFilter) ([]domain.User, error)

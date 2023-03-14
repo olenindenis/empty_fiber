@@ -256,11 +256,12 @@ func (mr *MockUserRepositoryMockRecorder) List(filter interface{}) *gomock.Call 
 }
 
 // Store mocks base method.
-func (m *MockUserRepository) Store(name, email, password string) error {
+func (m *MockUserRepository) Store(name, email, password string) (domain.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Store", name, email, password)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(domain.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Store indicates an expected call of Store.
