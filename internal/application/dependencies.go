@@ -57,7 +57,7 @@ func NewLogger(stage string, logLevel string) *zap.Logger {
 	}
 	level := logger.Level()
 	if err = level.Set(logLevel); err != nil {
-		panic(fmt.Sprintf("dev-logger: set level error: %v \n", err))
+		panic(fmt.Sprintf("logger: set level error: %v \n", err))
 	}
 	return logger
 }
