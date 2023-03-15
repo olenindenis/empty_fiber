@@ -12,8 +12,8 @@ WORKDIR /go/src/app
 
 COPY . .
 
-RUN go build -u -o api cmd/api/main.go
-RUN go build -u -o migrations cmd/migrations/main.go
+RUN go build -v -o api cmd/api/main.go
+RUN go build -v -o migrations cmd/migrations/main.go
 
 FROM builder as prod
 

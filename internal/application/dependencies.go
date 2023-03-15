@@ -24,7 +24,7 @@ const (
 )
 
 func Envs() {
-	log := NewLogger(levelForLog).Sugar()
+	log := NewLogger(levelForLog, os.Getenv("LOG_LEVEL")).Sugar()
 
 	if _, err := os.Stat(envFileName); err == nil {
 		var fileEnv map[string]string
@@ -41,24 +41,24 @@ func Envs() {
 	}
 }
 
-func NewLogger(level string) *zap.Logger {
+func NewLogger(stage string, logLevel string) *zap.Logger {
 	var logger *zap.Logger
 	var err error
-	defer logger.Sync()
 
-	switch level {
+	switch stage {
 	case "prod":
-		logger, err = zap.NewProduction()
-		if err != nil {
-			return nil
+		if logger, err = zap.NewProduction(); err != nil {
+			panic(fmt.Sprintf("prod-logger: create error: %v \n", err))
 		}
 	case "dev":
-		logger, err = zap.NewDevelopment()
-		if err != nil {
-			return nil
+		if logger, err = zap.NewDevelopment(); err != nil {
+			panic(fmt.Sprintf("dev-logger: create error: %v \n", err))
 		}
 	}
-
+	level := logger.Level()
+	if err = level.Set(logLevel); err != nil {
+		panic(fmt.Sprintf("dev-logger: set level error: %v \n", err))
+	}
 	return logger
 }
 

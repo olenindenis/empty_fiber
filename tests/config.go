@@ -13,6 +13,7 @@ import (
 	"envs/pkg/logger"
 
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
 const (
@@ -27,8 +28,7 @@ var (
 	DB                    database.Connection
 )
 
-func loadEnvs() {
-	log := logger.New(logger.Dev)
+func loadEnvs(log *zap.SugaredLogger) {
 	if _, err := os.Stat(envFileName); err == nil {
 		var fileEnv map[string]string
 		fileEnv, err := godotenv.Read()
@@ -46,8 +46,7 @@ func loadEnvs() {
 	}
 }
 
-func loadDBConnection() {
-	log := logger.New(logger.Dev)
+func loadDBConnection(log *zap.SugaredLogger) {
 	var err error
 	DB, err = database.NewDBConnection(
 		database.DriverName(os.Getenv("DB_DRIVER")),
@@ -79,6 +78,10 @@ func parseTime(t *testing.T, value string) time.Time {
 }
 
 func init() {
-	loadEnvs()
-	loadDBConnection()
+	log, err := logger.New(logger.Dev, os.Getenv("LOG_LEVEL"))
+	if err != nil {
+		panic(fmt.Sprintf("create logger error: %v \n", err))
+	}
+	loadEnvs(log)
+	loadDBConnection(log)
 }

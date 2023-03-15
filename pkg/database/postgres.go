@@ -29,10 +29,13 @@ func NewPostgresConnection(config DBConfig) Connection {
 	if err != nil {
 		panic(fmt.Sprintf("connection error: %v \n", err))
 	}
-
+	log, err := logger.New(logger.Dev, os.Getenv("LOG_LEVEL"))
+	if err != nil {
+		panic(fmt.Sprintf("logger error: %v \n", err))
+	}
 	connection := PostgresConnection{
 		conn: stdlib.OpenDB(*pgxConfig),
-		log:  logger.New(logger.Dev),
+		log:  log,
 	}
 	connection.config = config
 	return connection

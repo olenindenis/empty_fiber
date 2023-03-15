@@ -3,6 +3,7 @@ package application
 import (
 	"bytes"
 	"net/http"
+	"os"
 
 	_ "envs/docs"
 
@@ -37,7 +38,7 @@ func (s *HttpDSN) DSN() string {
 }
 
 func NewServer() *fiber.App {
-	log := NewLogger(LevelForLog).Sugar()
+	log := NewLogger(levelForLog, os.Getenv("LOG_LEVEL")).Sugar()
 
 	server := fiber.New(fiber.Config{
 		DisableStartupMessage: false,

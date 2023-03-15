@@ -4,8 +4,8 @@ WORKDIR /go/src/app
 
 COPY . .
 
-RUN go build -u -o api cmd/api/main.go
-RUN go build -u -o cli cmd/migrations/main.go
+RUN go build -v -o api cmd/api/main.go
+RUN go build -v -o cli cmd/migrations/main.go
 
 FROM gcr.io/distroless/base
 

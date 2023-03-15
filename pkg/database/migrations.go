@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"envs/pkg/logger"
-
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/golang-migrate/migrate/v4/database/mysql"
@@ -30,10 +28,10 @@ type Migrator struct {
 	log       *zap.SugaredLogger
 }
 
-func NewMigrator() (Migrator, error) {
+func NewMigrator(log *zap.SugaredLogger) (Migrator, error) {
 	startTimeout, err := strconv.Atoi(os.Getenv("DB_START_TIMEOUT"))
 	if err != nil {
-		panic(fmt.Sprintf("no timeout error: %v \n", err))
+		panic(fmt.Sprintf("migrator: no timeout error: %v \n", err))
 	}
 	time.Sleep(time.Second * time.Duration(startTimeout))
 	db, err := NewDBConnection(
@@ -47,12 +45,12 @@ func NewMigrator() (Migrator, error) {
 		},
 	)
 	if err != nil {
-		return Migrator{}, fmt.Errorf("db connection error: %v \n", err)
+		return Migrator{}, fmt.Errorf("migrator: db connection error: %v \n", err)
 	}
 
 	driver, err := getDriver(db)
 	if err != nil {
-		return Migrator{}, fmt.Errorf("instance error: %v \n", err)
+		return Migrator{}, fmt.Errorf("migrator: get driver error: %v \n", err)
 	}
 	migrator, err := migrate.NewWithDatabaseInstance(
 		fmt.Sprintf("file://%s", migrationFilesPath),
@@ -60,12 +58,11 @@ func NewMigrator() (Migrator, error) {
 		driver,
 	)
 	if err != nil {
-		return Migrator{}, fmt.Errorf("instance error: %v \n", err)
+		return Migrator{}, fmt.Errorf("migrator: instance error: %v \n", err)
 	}
-
 	return Migrator{
 		migration: migrator,
-		log:       logger.New(logger.Dev),
+		log:       log,
 	}, nil
 }
 

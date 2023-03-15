@@ -1,30 +1,34 @@
 package logger
 
-import "go.uber.org/zap"
-
-type Level string
-
-var (
-	Dev  Level = "dev"
-	Prod Level = "prod"
+import (
+	"go.uber.org/zap"
 )
 
-func New(level Level) *zap.SugaredLogger {
+type Stage string
+
+var (
+	Dev  Stage = "dev"
+	Prod Stage = "prod"
+)
+
+func New(stage Stage, logLevel string) (*zap.SugaredLogger, error) {
 	var (
 		logger = new(zap.Logger)
 		err    error
 	)
-	switch level {
-	case "prod":
-		logger, err = zap.NewProduction()
-		if err != nil {
-			return nil
+	switch stage {
+	case Prod:
+		if logger, err = zap.NewProduction(); err != nil {
+			return nil, err
 		}
-	case "dev":
-		logger, err = zap.NewDevelopment()
-		if err != nil {
-			return nil
+	case Dev:
+		if logger, err = zap.NewDevelopment(); err != nil {
+			return nil, err
 		}
 	}
-	return logger.Sugar()
+	level := logger.Level()
+	if err = level.Set(logLevel); err != nil {
+		return nil, err
+	}
+	return logger.Sugar(), nil
 }
