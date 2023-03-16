@@ -1,9 +1,10 @@
 package validator
 
 import (
-	goValidator "github.com/go-playground/validator/v10"
 	"reflect"
 	"strings"
+
+	goValidator "github.com/go-playground/validator/v10"
 )
 
 type Validator struct {

@@ -2,9 +2,10 @@ package database
 
 import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const droverName = "sqlite3"
@@ -26,7 +27,7 @@ func connection(database string) *sql.DB {
 	}
 
 	sqliteDatabase, _ := sql.Open(droverName, database)
-	//defer sqliteDatabase.Close() // Defer Closing the database
+	// defer sqliteDatabase.Close() // Defer Closing the database
 
 	return sqliteDatabase
 }

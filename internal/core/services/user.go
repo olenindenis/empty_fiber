@@ -2,10 +2,11 @@ package services
 
 import (
 	"database/sql"
+	"errors"
+
 	"envs/internal/core/domain"
 	"envs/internal/core/ports"
 	"envs/internal/dto"
-	"errors"
 )
 
 type UserService struct {

@@ -1,9 +1,10 @@
 package main
 
 import (
+	"flag"
+
 	"envs/internal/application"
 	"envs/pkg/formater"
-	"flag"
 )
 
 // @title Template Fiber API

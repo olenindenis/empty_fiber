@@ -1,28 +1,30 @@
 package handlers
 
 import (
+	"net/http"
+	"strconv"
+
 	"envs/internal/core/ports"
 	"envs/internal/dto"
 	userRequest "envs/internal/requests/user"
+
 	_ "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
-	"net/http"
-	"strconv"
 )
 
 const (
 	defaultLimit = 50
 )
 
-type UserHandlers struct {
+type UserHandler struct {
 	validator   ports.Validator
 	userService ports.UserService
 }
 
-var _ ports.UserHandlers = (*UserHandlers)(nil)
+var _ ports.UserHandlers = (*UserHandler)(nil)
 
-func NewUserHandlers(userService ports.UserService, validator ports.Validator) *UserHandlers {
-	return &UserHandlers{
+func NewUserHandler(userService ports.UserService, validator ports.Validator) *UserHandler {
+	return &UserHandler{
 		validator:   validator,
 		userService: userService,
 	}
@@ -36,7 +38,7 @@ func NewUserHandlers(userService ports.UserService, validator ports.Validator) *
 // @Produce  json
 // @Param limit body uint false "Limit"
 // @Param offset body uint false "Offset"
-// @Success 200 {object} []domain.User "User domain models"
+// @Success 200 {object} []domain.User "UserHandler domain models"
 // @Failure 400 {object} HTTPError "Bad request"
 // @Failure 401 {object} HTTPError "Unauthorized"
 // @Failure 403 {object} HTTPError "Forbidden"
@@ -45,7 +47,7 @@ func NewUserHandlers(userService ports.UserService, validator ports.Validator) *
 // @Failure 429 {object} HTTPError "Too Many Requests"
 // @Failure 500 {object} ServerError "Server error"
 // @Router /api/v1/user/list [get]
-func (sh *UserHandlers) List(ctx *fiber.Ctx) error {
+func (sh *UserHandler) List(ctx *fiber.Ctx) error {
 	limit, _ := strconv.Atoi(ctx.Query("limit"))
 	offset, _ := strconv.Atoi(ctx.Query("offset"))
 	order := ctx.Query("order")
@@ -69,7 +71,7 @@ func (sh *UserHandlers) List(ctx *fiber.Ctx) error {
 // @Accept  json
 // @Produce  json
 // @Param id path uint true "userID"
-// @Success 200 {object} domain.User "User domain model"
+// @Success 200 {object} domain.User "UserHandler domain model"
 // @Failure 400 {object} HTTPError "Bad request"
 // @Failure 401 {object} HTTPError "Unauthorized"
 // @Failure 403 {object} HTTPError "Forbidden"
@@ -78,7 +80,7 @@ func (sh *UserHandlers) List(ctx *fiber.Ctx) error {
 // @Failure 429 {object} HTTPError "Too Many Requests"
 // @Failure 500 {object} ServerError "Server error"
 // @Router /api/v1/user/{id} [get]
-func (sh *UserHandlers) Show(ctx *fiber.Ctx) error {
+func (sh *UserHandler) Show(ctx *fiber.Ctx) error {
 	userID, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(http.StatusUnprocessableEntity).JSON(HTTPError{
@@ -117,7 +119,7 @@ func (sh *UserHandlers) Show(ctx *fiber.Ctx) error {
 // @Failure 429 {object} HTTPError "Too Many Requests"
 // @Failure 500 {object} ServerError "Server error"
 // @Router /api/v1/user/{id} [put]
-func (sh *UserHandlers) Update(ctx *fiber.Ctx) error {
+func (sh *UserHandler) Update(ctx *fiber.Ctx) error {
 	request := userRequest.NewUpdateRequest(ctx, sh.validator)
 	err := request.Validate()
 
@@ -164,7 +166,7 @@ func (sh *UserHandlers) Update(ctx *fiber.Ctx) error {
 // @Failure 429 {object} HTTPError "Too Many Requests"
 // @Failure 500 {object} ServerError "Server error"
 // @Router /api/v1/user/{id} [delete]
-func (sh *UserHandlers) Delete(ctx *fiber.Ctx) error {
+func (sh *UserHandler) Delete(ctx *fiber.Ctx) error {
 	userID, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(http.StatusUnprocessableEntity).JSON(HTTPError{

@@ -2,30 +2,32 @@ package application
 
 import (
 	"context"
+	"os"
+	"strings"
+	"time"
+
 	"envs/internal/core/ports"
 	"envs/internal/core/services"
 	"envs/internal/handlers"
 	"envs/internal/repositories"
 	"envs/pkg/validator"
+
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
-	"os"
-	"strings"
-	"time"
 
 	"github.com/olekukonko/tablewriter"
 )
 
 type App struct {
-	httpDSN  HttpDSN
-	logLevel string
+	httpDSN HttpDSN
+	level   string
 }
 
-func NewApp(logLevel string) App {
+func NewApp(level string) App {
 	Envs()
 
 	return App{
-		logLevel: logLevel,
+		level: level,
 		httpDSN: NewHttpDSN(
 			WithHost(os.Getenv("LISTEN_HOST")),
 			WithPort(os.Getenv("LISTEN_PORT")),
@@ -36,7 +38,7 @@ func NewApp(logLevel string) App {
 func (a *App) Run() {
 	fx.New(
 		fx.NopLogger,
-		fx.Supply(a.logLevel, a.httpDSN),
+		fx.Supply(a.level, a.httpDSN),
 		fx.Provide(
 			NewLogger,
 			NewDBConnection,
@@ -46,7 +48,7 @@ func (a *App) Run() {
 		fx.Provide(
 			fx.Annotate(repositories.NewUserRepository, fx.As(new(ports.UserRepository))),
 			fx.Annotate(services.NewUserService, fx.As(new(ports.UserService))),
-			fx.Annotate(handlers.NewUserHandlers, fx.As(new(ports.UserHandlers))),
+			fx.Annotate(handlers.NewUserHandler, fx.As(new(ports.UserHandlers))),
 			fx.Annotate(validator.NewValidator, fx.As(new(ports.Validator))),
 			fx.Annotate(handlers.NewHealthChecksHandlers, fx.As(new(ports.HealthChecksHandlers))),
 		),
@@ -111,7 +113,7 @@ func PrintRoutes(server *fiber.App) {
 		tablewriter.Colors{},
 		tablewriter.Colors{})
 
-	//table.AppendBulk(arr)
+	// table.AppendBulk(arr)
 
 	for _, row := range arr {
 		if row[0] == "GET" {

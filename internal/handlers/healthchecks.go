@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"net/http"
+
 	"envs/internal/core/ports"
 	"envs/pkg/cache"
 	"envs/pkg/database"
+
 	"github.com/gofiber/fiber/v2"
-	"net/http"
 )
 
 type HealthChecksHandlers struct {

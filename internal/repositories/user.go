@@ -1,17 +1,18 @@
 package repositories
 
 import (
+	"time"
+
 	"envs/internal/core/domain"
 	"envs/internal/core/ports"
 	"envs/internal/dto"
 	"envs/pkg/database"
+
 	"github.com/Masterminds/squirrel"
-	"time"
 )
 
 const (
-	usersToRolesTableName = "user_role"
-	usersTableName        = "users"
+	usersTableName = "users"
 )
 
 type UserRepository struct {
@@ -133,11 +134,6 @@ func (sr *UserRepository) Store(name, email, password string) (domain.User, erro
 	if err := tx.Commit(); err != nil {
 		return domain.User{}, err
 	}
-
-	//userID, err := result.LastInsertId()
-	//if err != nil {
-	//	return domain.User{}, err
-	//}
 
 	return domain.User{
 		ID:        uint(userID),

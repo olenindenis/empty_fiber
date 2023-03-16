@@ -4,9 +4,9 @@
 #
 #COPY . .
 #
-#RUN golangci-lint run -v --skip-dirs cmd,docs,pkg,utils
+#RUN golangci-lint run -u --skip-dirs cmd,docs,pkg,utils
 
-FROM golang:1.17-buster as builder
+FROM golang:1.20-buster as builder
 
 WORKDIR /go/src/app
 

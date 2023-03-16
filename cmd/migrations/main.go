@@ -1,13 +1,16 @@
 package main
 
 import (
-	"envs/pkg/database"
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/joho/godotenv"
-	log "github.com/sirupsen/logrus"
 	"os"
+
+	"envs/pkg/database"
+	"envs/pkg/logger"
+
+	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
 type Color string
@@ -29,13 +32,7 @@ const (
 	envFileName = ".env"
 )
 
-func init() {
-	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
-}
-
-func initEnv() {
+func initEnv(log *zap.SugaredLogger) {
 	if _, err := os.Stat(envFileName); err == nil {
 		var fileEnv map[string]string
 		fileEnv, err := godotenv.Read()
@@ -52,6 +49,11 @@ func initEnv() {
 }
 
 func main() {
+	log, err := logger.New(logger.Dev, os.Getenv("LOG_LEVEL"))
+	if err != nil {
+		panic(fmt.Sprintf("create logger error: %v \n", err))
+	}
+
 	help := flag.Bool("help", false, "display help")
 	h := flag.Bool("h", false, "display help")
 	migrateNew := flag.Bool("migrate:new", false, "create new migration file")
@@ -72,8 +74,8 @@ func main() {
 	}
 
 	if len(os.Args) > 1 {
-		initEnv()
-		migrator, err := database.NewMigrator()
+		initEnv(log)
+		migrator, err := database.NewMigrator(log)
 		if err != nil {
 			log.Fatal(err.Error())
 		}

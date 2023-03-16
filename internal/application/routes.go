@@ -1,15 +1,17 @@
 package application
 
 import (
+	"net/http"
+
 	"envs/internal/core/ports"
 	"envs/internal/handlers"
+
 	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
-	"net/http"
 )
 
 const (
