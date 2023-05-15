@@ -2,8 +2,10 @@ package database
 
 import (
 	"bufio"
+	"envs/database/migrations"
 	"errors"
 	"fmt"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"os"
 	"strconv"
 	"strings"
@@ -21,7 +23,10 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
-const migrationFilesPath = "database/migrations"
+const (
+	migrationFilesPath = "database/migrations"
+	sourceName         = "migrations"
+)
 
 type Migrator struct {
 	migration *migrate.Migrate
@@ -52,11 +57,13 @@ func NewMigrator(log *zap.SugaredLogger) (Migrator, error) {
 	if err != nil {
 		return Migrator{}, fmt.Errorf("migrator: get driver error: %v \n", err)
 	}
-	migrator, err := migrate.NewWithDatabaseInstance(
-		fmt.Sprintf("file://%s", migrationFilesPath),
-		string(db.Driver()),
-		driver,
-	)
+
+	sourceDriver, err := iofs.New(migrations.Files, ".")
+	if err != nil {
+		return Migrator{}, err
+	}
+
+	migrator, err := migrate.NewWithInstance(sourceName, sourceDriver, os.Getenv("DB_DATABASE"), driver)
 	if err != nil {
 		return Migrator{}, fmt.Errorf("migrator: instance error: %v \n", err)
 	}
